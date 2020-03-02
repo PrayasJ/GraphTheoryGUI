@@ -7,16 +7,44 @@ class Node {
   color c;
   int radius;
   ArrayList<Node> adjN;
+  IntList jointTo;
   Node(int X, int Y, int i) {
     x=X;
     y=Y;
     index=i;
     radius=15;
     c=blue;
+    jointTo=new IntList();
     adjN=new ArrayList<Node>();
   }
 
+  void drawLine(int X,int Y,int i){
+    if(index==i){
+      stroke(0, 0, 0);
+      line(x, y, X, Y);
+      return;
+    }
+    for (int j=0; j<adjN.size(); j++) {
+      if (adjN.get(j).index==i) {
+        stroke(0, 0, 0);
+        line(x, y, X, Y);
+        break;
+      }
+      adjN.get(j).drawLine(X,Y,i);
+    }
+  }
+
+  void plotJointEdge(){
+    for(int i=0;i<jointTo.size();i++){
+      base.drawLine(X,Y,jointTo.get(i));
+    }
+    for(int i=0;i<adjN.size();i++){
+      adjN.get(i).plotJointEdge();
+    }
+  }
+
   void Plot() {
+    plotJointEdge();
     stroke(c);
     for (int r=radius; r>0; r--) circle(x, y, r);
     fill(0,0,0);
@@ -93,6 +121,21 @@ class Node {
     }
   }
 
+
+  void join(int i,int k){
+  if(index==i){
+      jointTo.append(k);
+      return;
+    }
+    for (int j=0; j<adjN.size(); j++) {
+      if (adjN.get(j).index==i) {
+        adjN.get(j).jointTo.append(k);
+        break;
+      }
+      adjN.get(j).join(i,k);
+    }
+  }
+
   boolean addNodeOrSel(int X, int Y, int i) {
     int ind=search(X, Y);
     if (ind==-1) {
@@ -104,6 +147,8 @@ class Node {
     }
   }
 }
+
+//CLASS DEFINITION ENDED
 
 void deselect() {
   base.des(Selected.get(0).index);
@@ -140,14 +185,22 @@ void draw() {
 }
 
 void mouseClicked() {
-  if (base==null) {
-    base=new Node(mouseX, mouseY, nodeCount++);
-    print("NODE ADDED\n");
-    base.c=red;
-    Selected.add(base);
-  } else {
-    if (base.addNodeOrSel(mouseX, mouseY, nodeCount)) {
-      nodeCount++;
+  if(mouseButton==LEFT){
+    if (base==null) {
+      base=new Node(mouseX, mouseY, nodeCount++);
+      print("NODE ADDED\n");
+      base.c=red;
+      Selected.add(base);
+    } else {
+      if (base.addNodeOrSel(mouseX, mouseY, nodeCount)) {
+        nodeCount++;
+      }
+    }
+  }
+  if(mouseButton==RIGHT){
+    if(Selected.size()==2){
+      base.join(Selected.get(0).index,Selected.get(1).index);
+      base.join(Selected.get(1).index,Selected.get(0).index);
     }
   }
 }
